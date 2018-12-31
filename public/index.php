@@ -18,6 +18,30 @@ $app = new \App\Application();
 
 /*
 |--------------------------------------------------------------------------
+| Register services
+|--------------------------------------------------------------------------
+*/
+
+// Get DI container
+$container = $app->getContainer();
+
+/**
+ * Inject twig templating.
+ */
+if (!isset($container['twig'])) {
+    $container['twig'] = function () {
+        // Specify our Twig templates location
+        $loader = new \Twig_Loader_Filesystem(__DIR__.'/../views');
+
+         // Instantiate our Twig
+        return new \Twig_Environment($loader, [
+            'cache' => __DIR__.'/../views/cache',
+        ]);
+    };
+}
+
+/*
+|--------------------------------------------------------------------------
 | Router; "nikic/fast-route"
 |--------------------------------------------------------------------------
 */
@@ -53,8 +77,17 @@ switch ($routeInfo[0]) {
             // https://catchmetech.com/en/post/91/how-to-invoke-method-on-class-with-dynamicall-generated-name-via-reflection
             list($class, $method) = explode("@", $handler, 2);
 
+            // Add controller namespace
+            if (strpos($class, "\\") === false) {
+                $class = "App\\Controllers\\".$class;
+            }
+
+            $args = [
+                $container,
+            ];
+
             $reflectionClass  = new \ReflectionClass($class);
-            $instance = $reflectionClass->newInstanceArgs();
+            $instance = $reflectionClass->newInstanceArgs($args);
             $reflectionMethod = $reflectionClass->getMethod($method);
             $reflectionMethod->invokeArgs($instance, $vars);
         } else {
