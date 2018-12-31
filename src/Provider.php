@@ -4,7 +4,7 @@ namespace App;
 
 use Pimple\Container;
 
-class ServiceProvider {
+class Provider {
 
     /**
      * Register services.

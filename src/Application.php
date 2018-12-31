@@ -20,8 +20,14 @@ class Application {
 
     public function registerServices()
     {
-        $provider = new ServiceProvider();
+        $provider = new Provider();
         $provider->register($this->container);
+    }
+
+    public function disptachRoutes()
+    {
+        $router = new Router();
+        $router->disptach($this->container);
     }
 
 }
