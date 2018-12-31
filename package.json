@@ -1,8 +1,10 @@
-
 {
   "private": true,
   "dependencies": {},
-  "devDependencies": {},
+  "devDependencies": {
+    "laravel-mix": "^4.0.12",
+    "tailwindcss": "^0.7.3"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   }
