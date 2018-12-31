@@ -21,10 +21,17 @@ class Provider {
                 // Specify our Twig templates location
                 $loader = new \Twig_Loader_Filesystem(__DIR__.'/../views');
 
-                 // Instantiate our Twig
+                // Instantiate our Twig
                 return new \Twig_Environment($loader, [
                     'cache' => __DIR__.'/../views/cache',
+                    // Recompile the template whenever the source code changes
+                    // https://twig.symfony.com/doc/2.x/api.html#environment-options
+                    'auto_reload' => true,
                 ]);
+
+                // return new \Twig_Environment($loader, [
+                //     'auto_reload' => true
+                // ]);
             };
         }
     }

@@ -13,6 +13,12 @@ it will scaffold all the files you need for creating a custom [**guard**](https:
 
 **Templating**: [Twig](https://twig.symfony.com)
 
+Frontend
+
+**Styling**: [TailwindCSS](https://tailwindcss.com)
+
+****
+
 ### Usage
 
 **Disclaimer**: This 'framework' is still under active development with no workable release yet.
