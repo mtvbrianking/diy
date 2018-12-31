@@ -6,3 +6,7 @@ PHP DIY Micro Framework
 **Routing**: [FastRoute](https://github.com/nikic/FastRoute)
 
 **Templating**: [Twig](https://twig.symfony.com)
+
+### Usage
+
+`composer create-project --prefer-dist bmatovu/minion blog`

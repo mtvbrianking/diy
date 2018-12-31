@@ -1,5 +1,5 @@
 {
-    "name": "bmatovu/diy",
+    "name": "bmatovu/minion",
     "description": "Mirco PHP framework from scratch",
     "type": "project",
     "license": "MIT",
@@ -33,6 +33,7 @@
           "php": "5.6.4"
         },
         "optimize-autoloader": true,
+        "preferred-install": "dist",
         "sort-packages": true
     },
     "scripts": {
