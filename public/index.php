@@ -23,9 +23,7 @@ $app = new \App\Application();
 */
 
 $dispatcher = FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $router) {
-    $router->addRoute('GET', '/', function() {
-        print "Hello world";
-    });
+    $router->addRoute('GET', '/', 'App\Controllers\Controller@index');
 });
 
 // Fetch method and URI from somewhere
@@ -49,9 +47,22 @@ switch ($routeInfo[0]) {
         break;
     case FastRoute\Dispatcher::FOUND:
         $handler = $routeInfo[1];
-        $reflection = new \ReflectionFunction($handler);
-        if($reflection->isClosure()) {
-            $reflection->invoke();
+        $vars = $routeInfo[2];
+
+        if(is_string($handler)) {
+            // https://catchmetech.com/en/post/91/how-to-invoke-method-on-class-with-dynamicall-generated-name-via-reflection
+            list($class, $method) = explode("@", $handler, 2);
+
+            $reflectionClass  = new \ReflectionClass($class);
+            $instance = $reflectionClass->newInstanceArgs();
+            $reflectionMethod = $reflectionClass->getMethod($method);
+            $reflectionMethod->invokeArgs($instance, $vars);
+        } else {
+            $reflection = new \ReflectionFunction($handler);
+            if($reflection->isClosure()) {
+                // https://stackoverflow.com/a/17373577/2732184
+                $reflection->invoke();
+            }
         }
         break;
 }
