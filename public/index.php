@@ -25,20 +25,8 @@ $app = new \App\Application();
 // Get DI container
 $container = $app->getContainer();
 
-/**
- * Inject twig templating.
- */
-if (!isset($container['twig'])) {
-    $container['twig'] = function () {
-        // Specify our Twig templates location
-        $loader = new \Twig_Loader_Filesystem(__DIR__.'/../views');
-
-         // Instantiate our Twig
-        return new \Twig_Environment($loader, [
-            'cache' => __DIR__.'/../views/cache',
-        ]);
-    };
-}
+// Register default services
+$app->registerServices();
 
 /*
 |--------------------------------------------------------------------------

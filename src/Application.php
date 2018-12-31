@@ -18,4 +18,10 @@ class Application {
         return $this->container;
     }
 
+    public function registerServices()
+    {
+        $provider = new ServiceProvider();
+        $provider->register($this->container);
+    }
+
 }
