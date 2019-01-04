@@ -1,83 +1,140 @@
 <?php
 
-namespace App;
+namespace Minion;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
+use FastRoute\RouteParser;
+use FastRoute\RouteParser\Std as StdParser;
 use Pimple\Container;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Router {
 
+    protected $basePath = '';
+
+    protected $container;
+
     /**
-     * Register routes.
-     * @return \FastRoute\simpleDispatcher $dispatcher
+     * Routes
+     *
+     * @var Route[]
      */
-    public function register()
+    protected $routes = [];
+
+    /**
+     * Route count incrementer
+     * @var int
+     */
+    protected $routeCount = 0;
+
+    /**
+     * Parser
+     *
+     * @var \FastRoute\RouteParser
+     */
+    protected $routeParser;
+
+    /**
+     * @var \FastRoute\Dispatcher
+     */
+    protected $dispatcher;
+
+    public function __construct(RouteParser $parser = null)
     {
-        return \FastRoute\simpleDispatcher(function(RouteCollector $collection) {
-            $collection->addRoute('GET', '/', 'App\Controllers\Controller@index');
-        });
+        $this->routeParser = $parser ?: new StdParser;
+    }
+
+    public function setContainer(Container $container)
+    {
+        $this->container = $container;
+    }
+
+    public function setBasePath($basePath)
+    {
+        if (!is_string($basePath)) {
+            throw new InvalidArgumentException('Router basePath must be a string');
+        }
+
+        $this->basePath = $basePath;
+
+        return $this;
     }
 
     /**
-     * Dispatch http requests.
-     * @param  \Pimple\Container $container
-     * @return void
+     * Get route objects
+     *
+     * @return Route[]
      */
-    public function disptach(Container $container)
+    public function getRoutes()
     {
-        // Register routes...
-        $dispatcher = $this->register();
+        return $this->routes;
+    }
 
-        // Fetch method and URI from somewhere
-        $httpMethod = $_SERVER['REQUEST_METHOD'];
-        $uri = $_SERVER['REQUEST_URI'];
-
-        // Strip query string (?foo=bar) and decode URI
-        if (false !== $pos = strpos($uri, '?')) {
-            $uri = substr($uri, 0, $pos);
+    public function route($method, $pattern, $callable)
+    {
+        if (!is_string($pattern)) {
+            throw new InvalidArgumentException('Route pattern must be a string');
         }
-        $uri = rawurldecode($uri);
 
-        $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
-        switch ($routeInfo[0]) {
-            case Dispatcher::NOT_FOUND:
-                throw new \Exception("404 - Not Found");
-                break;
-            case Dispatcher::METHOD_NOT_ALLOWED:
-                $allowedMethods = $routeInfo[1];
-                throw new \Exception("405 - Method Not Allowed");
-                break;
-            case Dispatcher::FOUND:
-                $handler = $routeInfo[1];
-                $vars = $routeInfo[2];
+        // According to RFC methods are defined in uppercase (See RFC 7231)
+        $method = strtoupper($method);
 
-                if(is_string($handler)) {
-                    // https://catchmetech.com/en/post/91/how-to-invoke-method-on-class-with-dynamicall-generated-name-via-reflection
-                    list($class, $method) = explode("@", $handler, 2);
-
-                    // Add controller namespace
-                    if (strpos($class, "\\") === false) {
-                        $class = "App\\Controllers\\".$class;
-                    }
-
-                    $args = [
-                        $container,
-                    ];
-
-                    $reflectionClass  = new \ReflectionClass($class);
-                    $instance = $reflectionClass->newInstanceArgs($args);
-                    $reflectionMethod = $reflectionClass->getMethod($method);
-                    $reflectionMethod->invokeArgs($instance, $vars);
-                } else {
-                    $reflection = new \ReflectionFunction($handler);
-                    if($reflection->isClosure()) {
-                        // https://stackoverflow.com/a/17373577/2732184
-                        $reflection->invoke();
-                    }
-                }
-                break;
+        $route = new Route($method, $pattern, $callable, $this->routeCount);
+        if (!empty($this->container)) {
+            $route->setContainer($this->container);
         }
+
+        // Keep track of routes...
+        $this->routes[$route->getIdentifier()] = $route;
+        $this->routeCount++;
+
+        return $route;
+    }
+
+    /**
+     * @return \FastRoute\Dispatcher
+     */
+    protected function createDispatcher()
+    {
+        if ($this->dispatcher) {
+            return $this->dispatcher;
+        }
+
+        $routeDefinitionCallback = function (RouteCollector $r) {
+            foreach ($this->getRoutes() as $route) {
+                $r->addRoute($route->getMethod(), $route->getPattern(), $route->getIdentifier());
+            }
+        };
+
+        $this->dispatcher = \FastRoute\simpleDispatcher($routeDefinitionCallback, [
+            'routeParser' => $this->routeParser,
+        ]);
+
+        return $this->dispatcher;
+    }
+
+    public function setDispatcher(Dispatcher $dispatcher)
+    {
+        $this->dispatcher = $dispatcher;
+    }
+
+    public function dispatch(ServerRequestInterface $request)
+    {
+        $uri = '/' . ltrim($request->getUri()->getPath(), '/');
+
+        return $this->createDispatcher()->dispatch(
+            $request->getMethod(),
+            $uri
+        );
+    }
+
+    public function lookupRoute($identifier)
+    {
+        if (!isset($this->routes[$identifier])) {
+            throw new RuntimeException('Route not found, looks like your route cache is stale.');
+        }
+        return $this->routes[$identifier];
     }
 
 }
