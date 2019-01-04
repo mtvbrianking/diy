@@ -34,7 +34,7 @@ $defaultSettings = [
 
 if (!isset($container['settings'])) {
     $container['settings'] = function () use($defaultSettings) {
-        return new \Minion\Collection($defaultSettings);
+        return new \Slim\Psr7\Utilities\Collection($defaultSettings);
     };
 }
 

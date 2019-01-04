@@ -54,42 +54,42 @@ class Application {
 
         $router = $this->container->offsetGet('router');
 
-        echo "<pre>";
-        var_dump($request);
+        // echo "<pre>";
+        // var_dump($request);
 
-        // if (is_callable([$request->getUri(), 'getBasePath']) && is_callable([$router, 'setBasePath'])) {
-        //     $router->setBasePath($request->getUri()->getBasePath());
-        // }
+        if (is_callable([$request->getUri(), 'getBasePath']) && is_callable([$router, 'setBasePath'])) {
+            $router->setBasePath($request->getUri()->getBasePath());
+        }
 
-        // $routeInfo = $router->dispatch($request);
+        $routeInfo = $router->dispatch($request);
 
-        // if ($routeInfo[0] === Dispatcher::FOUND) {
-        //     $routeArguments = [];
-        //     foreach ($routeInfo[2] as $key => $value) {
-        //         $routeArguments[$key] = urldecode($value);
-        //     }
+        if ($routeInfo[0] === Dispatcher::FOUND) {
+            $routeArguments = [];
+            foreach ($routeInfo[2] as $key => $value) {
+                $routeArguments[$key] = urldecode($value);
+            }
 
-        //     $route = $router->lookupRoute($routeInfo[1]);
-        //     $route->prepare($request, $routeArguments);
+            $route = $router->lookupRoute($routeInfo[1]);
+            $route->prepare($request, $routeArguments);
 
-        //     // add route to the request's attributes in case a middleware or handler needs access to the route
-        //     $request = $request->withAttribute('route', $route);
-        // }
+            // add route to the request's attributes in case a middleware or handler needs access to the route
+            $request = $request->withAttribute('route', $route);
+        }
 
-        // $routeInfo['request'] = [$request->getMethod(), (string) $request->getUri()];
+        $routeInfo['request'] = [$request->getMethod(), (string) $request->getUri()];
 
-        // // return $request->withAttribute('routeInfo', $routeInfo);
+        // return $request->withAttribute('routeInfo', $routeInfo);
 
-        // $request->withAttribute('routeInfo', $routeInfo);
+        $request->withAttribute('routeInfo', $routeInfo);
 
-        // // ..........................................................
-        // // Invoke Route Ojbect
-        // $route($request, $response);
-        // // ..........................................................
+        // ..........................................................
+        // Invoke Route Ojbect
+        $route($request, $response);
+        // ..........................................................
 
-        // $this->respond($response);
+        $this->respond($response);
 
-        // return $response;
+        return $response;
     }
 
     public function respond(ResponseInterface $response)
